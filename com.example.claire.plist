@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.example.claire</string>
+
+    <!-- Without sandbox (simpler): -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/path/to/claire/claire.py</string>
+        <string>--port</string>
+        <string>8765</string>
+    </array>
+
+    <!-- With sandbox (replace /path/to with actual paths): -->
+    <!--
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/sandbox-exec</string>
+        <string>-f</string>
+        <string>/path/to/claire/claire.sb</string>
+        <string>/usr/bin/python3</string>
+        <string>/path/to/claire/claire.py</string>
+        <string>--port</string>
+        <string>8765</string>
+    </array>
+    -->
+
+    <key>WorkingDirectory</key>
+    <string>/path/to/claire</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/claire/logs/server.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/path/to/claire/logs/server.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin</string>
+    </dict>
+</dict>
+</plist>

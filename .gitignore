@@ -1,0 +1,7 @@
+sessions/
+logs/
+.env
+SOUL.md
+__pycache__/
+*.pyc
+.DS_Store
