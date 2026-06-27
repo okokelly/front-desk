@@ -1,11 +1,11 @@
 # Front Desk
 
-An AI receptionist for your personal website. Visitors chat; she screens them,
-takes notes, and saves transcripts. You stay in control. You pick her name.
+An AI receptionist for your personal website. Visitors chat; they screen them,
+take notes, and save transcripts. You stay in control. You pick their name.
 
 - **One Python file** — stdlib only, no dependencies
-- **Your rules** — customize the prompt, she follows it
-- **Your name** — call her Claire, Alexis, whatever you want
+- **Your rules** — customize the prompt, they follow it
+- **Your name** — call them Alex, Casey, whatever you want
 - **Rate limited** — 20 req/min per IP
 - **Sandbox-ready** — macOS sandbox profile included
 - **Auto-saves** — every conversation written to disk
@@ -21,7 +21,7 @@ cp SOUL.example.md SOUL.md
 # Edit SOUL.md — replace [PRINCIPAL NAME] and [AGENT NAME] with your info
 
 # 4. Run (pick any name)
-python3 claire.py --name Alexis
+python3 frontdesk.py --name Alexis
 
 # 5. Expose to the internet
 cloudflared tunnel --url http://localhost:8765
@@ -35,11 +35,11 @@ Visit `http://localhost:8765/front-desk` to see your front desk.
 and your boundaries. Replace `[PRINCIPAL NAME]` with your name and
 `[AGENT NAME]` with whatever you want to call her.
 
-**Agent name:** Pass `--name` to change it from the default (Claire):
+**Agent name:** Pass `--name` to change it from the default (Alex):
 
 ```bash
-python3 claire.py --name Alexis
-python3 claire.py --name Taylor
+python3 frontdesk.py --name Alexis
+python3 frontdesk.py --name Taylor
 ```
 
 The name appears in the page title, header, greeting, and chat UI.
@@ -47,10 +47,10 @@ The name appears in the page title, header, greeting, and chat UI.
 ## Configuration
 
 ```bash
-python3 claire.py --port 8080              # Custom port (default: 8765)
-python3 claire.py --name Alexis            # Custom agent name (default: Claire)
-python3 claire.py --key sk-...             # API key on command line
-python3 claire.py --soul my-prompt.md      # Custom prompt file
+python3 frontdesk.py --port 8080              # Custom port (default: 8765)
+python3 frontdesk.py --name Alexis            # Custom agent name (default: Alex)
+python3 frontdesk.py --key sk-...             # API key on command line
+python3 frontdesk.py --soul my-prompt.md      # Custom prompt file
 ```
 
 Or use environment variables / `.env`:
@@ -63,7 +63,7 @@ CLAIRE_API_KEY=*** How It Works
 Visitor → yoursite.com/front-desk
            │
            ▼
-         claire.py
+         frontdesk.py
            │
            ├─ Reads SOUL.md (your rules)
            ├─ Calls DeepSeek API (deepseek-chat, temp=0.5)
@@ -96,10 +96,10 @@ abandon the conversation.
 On macOS, use launchd to keep the server running:
 
 ```bash
-# 1. Edit com.example.claire.plist — fix the paths and name
+# 1. Edit com.example.frontdesk.plist — fix the paths and name
 # 2. Install
-cp com.example.claire.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.example.claire.plist
+cp com.example.frontdesk.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.example.frontdesk.plist
 
 # 3. For a custom domain, create a Cloudflare Tunnel
 cloudflared tunnel create my-front-desk
@@ -108,7 +108,7 @@ cloudflared tunnel create my-front-desk
 
 ## Sandboxing (macOS)
 
-`claire.sb` is a macOS sandbox profile that restricts the process to ONLY:
+`frontdesk.sb` is a macOS sandbox profile that restricts the process to ONLY:
 - Read files in its own directory
 - Read your API key from `.env`
 - Make HTTPS requests to api.deepseek.com
@@ -116,14 +116,14 @@ cloudflared tunnel create my-front-desk
 Everything else in your home directory is blocked at the OS level.
 
 ```bash
-sandbox-exec -f claire.sb python3 claire.py
+sandbox-exec -f frontdesk.sb python3 frontdesk.py
 ```
 
 ## Model & Cost
 
 Default: **DeepSeek V3** (`deepseek-chat`) at $0.27/M input tokens.
 A full conversation of 10 messages costs roughly $0.001. You can swap to
-any OpenAI-compatible API by changing the endpoint in `claire.py`.
+any OpenAI-compatible API by changing the endpoint in `frontdesk.py`.
 
 ## License
 

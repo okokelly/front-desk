@@ -3,7 +3,7 @@
 AI front desk for your personal website.
 
 A single-file web server that puts a friendly AI receptionist between
-you and the internet. Visitors chat; she screens them and saves
+you and the internet. Visitors chat; they screen them and saves
 conversation transcripts. You review later.
 
 Zero dependencies beyond Python stdlib. Sandbox-ready.
@@ -34,7 +34,7 @@ PORT = 8765
 MAX_USER_MSGS = 10
 SESSIONS_DIR = Path(__file__).resolve().parent / "sessions"
 SOUL_PATH = Path(__file__).resolve().parent / "SOUL.md"
-AGENT_NAME = "Claire"  # override with --name
+AGENT_NAME = "Alex"  # override with --name
 
 # Rate limiting: 20 requests per 60s per IP
 RATE_LIMIT_WINDOW = 60
@@ -178,7 +178,7 @@ def build_html(name):
     <input type="text" id="input" placeholder="Introduce yourself…" onkeydown="if(event.key==='Enter')send()" autofocus>
     <button id="sendBtn" onclick="send()">→</button>
   </div>
-  <footer>You're talking to {name}, an AI assistant. She'll figure out how best to help.</footer>
+  <footer>You're talking to {name}, an AI assistant. They'll figure out how best to help.</footer>
 </div>
 <script>
 const $chat = document.getElementById('chat');
