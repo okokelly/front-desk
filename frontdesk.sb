@@ -1,8 +1,8 @@
-;; macOS sandbox profile for Claire front-desk
-;; Usage: sandbox-exec -f claire.sb /usr/bin/python3 claire.py --port 8765
+;; macOS sandbox profile for front desk
+;; Usage: sandbox-exec -f frontdesk.sb /usr/bin/python3 frontdesk.py --port 8765
 ;;
 ;; This sandbox restricts the front-desk process to ONLY:
-;;   - The claire directory (reading code + prompt, writing sessions)
+;;   - The frontdesk directory (reading code + prompt, writing sessions)
 ;;   - The .env file (reading API key)
 ;;   - Outbound HTTPS to api.deepseek.com
 ;; Everything else in the home directory is denied.
@@ -16,7 +16,7 @@
 (deny file-read* (subpath "/Users/YOUR_USERNAME"))
 (deny file-write* (subpath "/Users/YOUR_USERNAME"))
 
-;; ...except exactly what Claire needs
-(allow file-read* (subpath "/path/to/claire"))
+;; ...except exactly what the agent needs
+(allow file-read* (subpath "/path/to/frontdesk"))
 (allow file-read* (subpath "/Users/YOUR_USERNAME/.claire/.env"))
-(allow file-write* (subpath "/path/to/claire/sessions"))
+(allow file-write* (subpath "/path/to/frontdesk/sessions"))

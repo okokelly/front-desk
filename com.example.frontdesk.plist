@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.example.claire</string>
+    <string>com.example.frontdesk</string>
 
     <!-- Without sandbox (simpler): -->
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/path/to/claire/claire.py</string>
+        <string>/path/to/frontdesk/frontdesk.py</string>
         <string>--port</string>
         <string>8765</string>
     </array>
@@ -20,16 +20,16 @@
     <array>
         <string>/usr/bin/sandbox-exec</string>
         <string>-f</string>
-        <string>/path/to/claire/claire.sb</string>
+        <string>/path/to/frontdesk/frontdesk.sb</string>
         <string>/usr/bin/python3</string>
-        <string>/path/to/claire/claire.py</string>
+        <string>/path/to/frontdesk/frontdesk.py</string>
         <string>--port</string>
         <string>8765</string>
     </array>
     -->
 
     <key>WorkingDirectory</key>
-    <string>/path/to/claire</string>
+    <string>/path/to/frontdesk</string>
 
     <key>RunAtLoad</key>
     <true/>
@@ -38,10 +38,10 @@
     <true/>
 
     <key>StandardOutPath</key>
-    <string>/path/to/claire/logs/server.log</string>
+    <string>/path/to/frontdesk/logs/server.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/path/to/claire/logs/server.log</string>
+    <string>/path/to/frontdesk/logs/server.log</string>
 
     <key>EnvironmentVariables</key>
     <dict>

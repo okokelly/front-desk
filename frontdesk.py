@@ -9,11 +9,11 @@ conversation transcripts. You review later.
 Zero dependencies beyond Python stdlib. Sandbox-ready.
 
 Usage:
-  python3 claire.py                              # http://localhost:8765
-  python3 claire.py --port 8080                  # custom port
-  python3 claire.py --name Alexis                 # custom agent name
-  python3 claire.py --key sk-...                 # API key (or set CLAIRE_API_KEY)
-  python3 claire.py --soul my-prompt.md          # custom prompt
+  python3 frontdesk.py                              # http://localhost:8765
+  python3 frontdesk.py --port 8080                  # custom port
+  python3 frontdesk.py --name Alexis                 # custom agent name
+  python3 frontdesk.py --key sk-...                 # API key (or set CLAIRE_API_KEY)
+  python3 frontdesk.py --soul my-prompt.md          # custom prompt
 
 For public access:
   cloudflared tunnel --url http://localhost:8765
