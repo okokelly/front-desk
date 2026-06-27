@@ -11,8 +11,8 @@ Zero dependencies beyond Python stdlib. Sandbox-ready.
 Usage:
   python3 frontdesk.py                              # http://localhost:8765
   python3 frontdesk.py --port 8080                  # custom port
-  python3 frontdesk.py --name Alexis                 # custom agent name
-  python3 frontdesk.py --key sk-...                 # API key (or set CLAIRE_API_KEY)
+  python3 frontdesk.py --name Pikachu                 # custom agent name
+  python3 frontdesk.py --key sk-...                 # API key (or set FRONTDESK_API_KEY)
   python3 frontdesk.py --soul my-prompt.md          # custom prompt
 
 For public access:
@@ -34,7 +34,7 @@ PORT = 8765
 MAX_USER_MSGS = 10
 SESSIONS_DIR = Path(__file__).resolve().parent / "sessions"
 SOUL_PATH = Path(__file__).resolve().parent / "SOUL.md"
-AGENT_NAME = "Alex"  # override with --name
+AGENT_NAME = "Pikachu"  # override with --name
 
 # Rate limiting: 20 requests per 60s per IP
 RATE_LIMIT_WINDOW = 60
@@ -46,19 +46,19 @@ SYSTEM_PROMPT = ""
 
 # ── API Key ────────────────────────────────────────────────────
 def load_api_key():
-    """Read CLAIRE_API_KEY from environment or ~/.claire/.env"""
+    """Read FRONTDESK_API_KEY from environment or ~/.frontdesk/.env"""
     env_paths = [
-        Path.home() / ".claire" / ".env",
+        Path.home() / ".frontdesk" / ".env",
         Path.home() / ".hermes" / ".env",
     ]
     for p in env_paths:
         if p.exists():
             for line in p.read_text().splitlines():
-                if line.startswith("CLAIRE_API_KEY="):
+                if line.startswith("FRONTDESK_API_KEY="):
                     return line.split("=", 1)[1].strip().strip('"').strip("'")
                 if line.startswith("DEEPSEEK_API_KEY="):
                     return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return os.environ.get("CLAIRE_API_KEY", "")
+    return os.environ.get("FRONTDESK_API_KEY", "")
 
 # ── Prompt ─────────────────────────────────────────────────────
 def load_soul():
@@ -383,7 +383,7 @@ def main():
         API_KEY = load_api_key()
     if not API_KEY:
         print("Error: No API key found.")
-        print("  Set CLAIRE_API_KEY in ~/.claire/.env or pass --key sk-...")
+        print("  Set FRONTDESK_API_KEY in ~/.frontdesk/.env or pass --key sk-...")
         sys.exit(1)
 
     SYSTEM_PROMPT = load_soul()

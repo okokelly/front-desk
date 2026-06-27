@@ -5,7 +5,7 @@ take notes, and save transcripts. You stay in control. You pick their name.
 
 - **One Python file** — stdlib only, no dependencies
 - **Your rules** — customize the prompt, they follow it
-- **Your name** — call them Alex, Casey, whatever you want
+- **Your name** — call them Pikachu. Pass --name to change you want
 - **Rate limited** — 20 req/min per IP
 - **Sandbox-ready** — macOS sandbox profile included
 - **Auto-saves** — every conversation written to disk
@@ -16,12 +16,12 @@ take notes, and save transcripts. You stay in control. You pick their name.
 # 1. Get a DeepSeek API key (https://platform.deepseek.com)
 
 # 2. Set your key
-export CLAIRE_API_KEY=*** 3. Copy and customize your prompt
+export FRONTDESK_API_KEY=*** 3. Copy and customize your prompt
 cp SOUL.example.md SOUL.md
 # Edit SOUL.md — replace [PRINCIPAL NAME] and [AGENT NAME] with your info
 
 # 4. Run (pick any name)
-python3 frontdesk.py --name Alexis
+python3 frontdesk.py --name Pikachu
 
 # 5. Expose to the internet
 cloudflared tunnel --url http://localhost:8765
@@ -35,11 +35,11 @@ Visit `http://localhost:8765/front-desk` to see your front desk.
 and your boundaries. Replace `[PRINCIPAL NAME]` with your name and
 `[AGENT NAME]` with whatever you want to call her.
 
-**Agent name:** Pass `--name` to change it from the default (Alex):
+**Agent name:** Pass `--name` to change it from the default (Pikachu):
 
 ```bash
-python3 frontdesk.py --name Alexis
-python3 frontdesk.py --name Taylor
+python3 frontdesk.py --name Pikachu
+python3 frontdesk.py --name Pikachu
 ```
 
 The name appears in the page title, header, greeting, and chat UI.
@@ -48,7 +48,7 @@ The name appears in the page title, header, greeting, and chat UI.
 
 ```bash
 python3 frontdesk.py --port 8080              # Custom port (default: 8765)
-python3 frontdesk.py --name Alexis            # Custom agent name (default: Alex)
+python3 frontdesk.py --name Pikachu            # Custom agent name (default: Pikachu)
 python3 frontdesk.py --key sk-...             # API key on command line
 python3 frontdesk.py --soul my-prompt.md      # Custom prompt file
 ```
@@ -56,8 +56,8 @@ python3 frontdesk.py --soul my-prompt.md      # Custom prompt file
 Or use environment variables / `.env`:
 
 ```
-# ~/.claire/.env
-CLAIRE_API_KEY=*** How It Works
+# ~/.frontdesk/.env
+FRONTDESK_API_KEY=*** How It Works
 
 ```
 Visitor → yoursite.com/front-desk

@@ -18,5 +18,5 @@
 
 ;; ...except exactly what the agent needs
 (allow file-read* (subpath "/path/to/frontdesk"))
-(allow file-read* (subpath "/Users/YOUR_USERNAME/.claire/.env"))
+(allow file-read* (subpath "/Users/YOUR_USERNAME/.frontdesk/.env"))
 (allow file-write* (subpath "/path/to/frontdesk/sessions"))
