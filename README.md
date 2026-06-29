@@ -132,6 +132,32 @@ message onward — so even the ones who wander off leave a note behind.
 Session files are written owner-only (`0600`). The folder is git-ignored — your
 visitors' words never leave your machine.
 
+## Advanced: A Daily Recap
+
+`sessions/` is just a folder of plain JSON, which means any AI agent can read it
+for you. Instead of opening files one by one, hand the day's transcripts to an
+agent — Claude Code, a small script calling an LLM, whatever you like — and ask
+for a briefing, the way you'd ask a chief of staff "who came by yesterday?"
+
+A prompt like this goes a long way:
+
+> Read today's files in `sessions/`. Give me a short morning recap: who stopped
+> by, what each person wanted, anything worth following up on, and skip the
+> time-wasters. Flag anyone I'd genuinely want to reply to.
+
+Make it a habit by running it on a schedule. For example, a `launchd` job or a
+cron line that wakes an agent each morning:
+
+```bash
+# 8am daily — summarize yesterday's visitors into recap-YYYY-MM-DD.md
+0 8 * * *  cd /path/to/frontdesk && your-agent "Summarize today's sessions/ \
+           files: who came by, what they wanted, who's worth a reply." \
+           > "recaps/recap-$(date +\%F).md"
+```
+
+Now the front desk doesn't just take messages — it briefs you each morning, and
+you decide who's worth your time over coffee instead of in the moment.
+
 ## Keeping It Open (macOS)
 
 To run the desk around the clock, hand it to `launchd`:
