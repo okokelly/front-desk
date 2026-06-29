@@ -1,80 +1,121 @@
 # Front Desk
 
-An AI receptionist for your personal website. Visitors chat; they screen them,
-take notes, and save transcripts. You stay in control. You pick their name.
+Always someone at the desk.
 
-- **One Python file** — stdlib only, no dependencies
-- **Your rules** — customize the prompt, they follow it
-- **Your name** — call them Pikachu. Pass --name to change you want
-- **Rate limited** — 20 req/min per IP
-- **Sandbox-ready** — macOS sandbox profile included
-- **Auto-saves** — every conversation written to disk
+Front Desk is a small AI receptionist for your personal website. Most personal
+sites give visitors a wall and maybe an email address they're nervous to use.
+This puts a friendly face at the door instead — it says hello, listens, answers
+what it can, and makes you feel reachable, while quietly noting which
+conversations are worth your time.
+
+One Python file. No dependencies. You write the rules; it sets the tone.
+
+```
+Visitor → yoursite.com/front-desk → Pikachu → you (for the conversations that matter)
+```
+
+The default receptionist is named **Pikachu**. Rename it in one flag — see below.
+
+## Why
+
+A contact form is a closed door with a mail slot. It asks a stranger to write a
+cold email to someone they've never met and hope for a reply — so most people
+don't bother, and you never hear from them at all.
+
+Front Desk lowers that barrier. Anyone can walk up and have a real conversation:
+ask a question, introduce themselves, get a warm and useful answer on the spot.
+You become more approachable to everyone — and, at the same time, more selective,
+because you read the transcripts later and choose which conversations to pick up.
+No one is turned away at the door; you simply decide what's worth your time.
 
 ## Quick Start
 
+You need a DeepSeek API key — grab one at https://platform.deepseek.com.
+
 ```bash
-# 1. Get a DeepSeek API key (https://platform.deepseek.com)
+# 1. Hand it your key
+export FRONTDESK_API_KEY=sk-your-key-here
 
-# 2. Set your key
-export FRONTDESK_API_KEY=*** 3. Copy and customize your prompt
-cp SOUL.example.md SOUL.md
-# Edit SOUL.md — replace [PRINCIPAL NAME] and [AGENT NAME] with your info
+# 2. Give it something to say
+cp SOUL.example.md SOUL.md          # then edit SOUL.md (see "The Soul" below)
 
-# 4. Run (pick any name)
-python3 frontdesk.py --name Pikachu
+# 3. Open the desk
+python3 frontdesk.py
 
-# 5. Expose to the internet
+# 4. Let the world in
 cloudflared tunnel --url http://localhost:8765
 ```
 
-Visit `http://localhost:8765/front-desk` to see your front desk.
+Now visit **http://localhost:8765/front-desk** and say hello to your receptionist.
 
-## Customizing
+## The Soul
 
-**SOUL.md** is your agent's personality. Fill in who you are, what you're open to,
-and your boundaries. Replace `[PRINCIPAL NAME]` with your name and
-`[AGENT NAME]` with whatever you want to call her.
-
-**Agent name:** Pass `--name` to change it from the default (Pikachu):
+`SOUL.md` is the agent's brief — who it works for, what you're open to, and where
+the line is. It's just a prompt, so write it like you'd brief a real person on
+their first day.
 
 ```bash
-python3 frontdesk.py --name Pikachu
-python3 frontdesk.py --name Pikachu
+cp SOUL.example.md SOUL.md
 ```
 
-The name appears in the page title, header, greeting, and chat UI.
+Open `SOUL.md` and fill in the blanks: replace `[PRINCIPAL NAME]` with your name
+and `[AGENT NAME]` with whatever you call your receptionist. Be specific about
+what you're always glad to hear about and what's better pointed elsewhere — that
+warmth and that judgment are the whole job.
+
+The more of yourself you pour into it, the more it sounds like you. Don't stop at
+a job title — give it your story, your voice, the things you care about. A
+receptionist who actually knows you makes everyone feel like they've reached the
+right place.
+
+Edits take effect on restart.
+
+## Naming It
+
+The receptionist answers to **Pikachu** out of the box. Call it anything:
+
+```bash
+python3 frontdesk.py --name Iris
+```
+
+The name shows up in the page title, the header, the greeting, and the footer.
 
 ## Configuration
 
 ```bash
-python3 frontdesk.py --port 8080              # Custom port (default: 8765)
-python3 frontdesk.py --name Pikachu            # Custom agent name (default: Pikachu)
-python3 frontdesk.py --key sk-...             # API key on command line
-python3 frontdesk.py --soul my-prompt.md      # Custom prompt file
+python3 frontdesk.py --port 8080          # port (default: 8765)
+python3 frontdesk.py --name Iris          # agent name (default: Pikachu)
+python3 frontdesk.py --key sk-...         # API key on the command line
+python3 frontdesk.py --soul desk.md       # a different soul file
 ```
 
-Or use environment variables / `.env`:
+Prefer a file over an environment variable? Drop your key here:
 
-```
+```bash
 # ~/.frontdesk/.env
-FRONTDESK_API_KEY=*** How It Works
-
-```
-Visitor → yoursite.com/front-desk
-           │
-           ▼
-         frontdesk.py
-           │
-           ├─ Reads SOUL.md (your rules)
-           ├─ Calls DeepSeek API (deepseek-chat, temp=0.5)
-           ├─ Detects goodbye language → auto-closes
-           ├─ Saves every conversation → sessions/*.json
-           └─ Rate limits: 20 req/min per IP
+FRONTDESK_API_KEY=sk-your-key-here
 ```
 
-## Session Files
+## How It Works
 
-Every conversation is saved to `sessions/YYYYMMDD_HHMMSS.json`:
+```
+Visitor opens /front-desk
+        │
+        ▼
+   frontdesk.py
+        ├─ loads SOUL.md ............. your rules
+        ├─ calls DeepSeek ............ deepseek-chat, temp 0.5
+        ├─ trusts nothing ............ sanitizes every message from the browser
+        ├─ rate limits ............... 20 requests / minute / visitor IP
+        ├─ hears a goodbye ........... wraps up and closes the chat
+        ├─ caps the visit ............ auto-closes after 10 messages
+        └─ writes it down ............ sessions/<id>.json
+```
+
+## Reading the Mail
+
+Every conversation lands in `sessions/` as JSON, from the visitor's second
+message onward — so even the ones who wander off leave a note behind.
 
 ```json
 {
@@ -88,43 +129,47 @@ Every conversation is saved to `sessions/YYYYMMDD_HHMMSS.json`:
 }
 ```
 
-Sessions start saving after the visitor's second message — even if they
-abandon the conversation.
+Session files are written owner-only (`0600`). The folder is git-ignored — your
+visitors' words never leave your machine.
 
-## Making It Permanent
+## Keeping It Open (macOS)
 
-On macOS, use launchd to keep the server running:
+To run the desk around the clock, hand it to `launchd`:
 
 ```bash
-# 1. Edit com.example.frontdesk.plist — fix the paths and name
-# 2. Install
+# 1. Edit com.example.frontdesk.plist — fix the paths and the name
+# 2. Install it
 cp com.example.frontdesk.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.example.frontdesk.plist
+```
 
-# 3. For a custom domain, create a Cloudflare Tunnel
+For a real domain, point a Cloudflare Tunnel at it:
+
+```bash
 cloudflared tunnel create my-front-desk
-# Then configure DNS and install as launchd service
+# then configure DNS and run it as a service
 ```
 
 ## Sandboxing (macOS)
 
-`frontdesk.sb` is a macOS sandbox profile that restricts the process to ONLY:
-- Read files in its own directory
-- Read your API key from `.env`
-- Make HTTPS requests to api.deepseek.com
-
-Everything else in your home directory is blocked at the OS level.
+`frontdesk.sb` walls the process off from your home directory — it can read its
+own folder and your `.env`, write to `sessions/`, and nothing else.
 
 ```bash
 sandbox-exec -f frontdesk.sb python3 frontdesk.py
 ```
 
+One honest caveat: this is **filesystem** isolation, not network isolation. The
+profile uses `(allow default)`, so the process can still reach any host — macOS
+sandboxes can't filter outbound traffic by domain. Treat it as a lock on the
+filing cabinet, not on the phone line.
+
 ## Model & Cost
 
-Default: **DeepSeek V3** (`deepseek-chat`) at $0.27/M input tokens.
-A full conversation of 10 messages costs roughly $0.001. You can swap to
-any OpenAI-compatible API by changing the endpoint in `frontdesk.py`.
+Runs on **DeepSeek V3** (`deepseek-chat`) — about $0.27 per million input
+tokens, so a full ten-message visit costs roughly a tenth of a cent. The API is
+OpenAI-compatible; point the endpoint in `frontdesk.py` at any provider you like.
 
 ## License
 
-MIT
+MIT — take it, rename it, make it yours.
