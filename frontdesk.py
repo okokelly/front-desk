@@ -23,6 +23,7 @@ import http.server
 import json
 import os
 import random
+import re
 import socketserver
 import sys
 import time
@@ -36,6 +37,10 @@ SESSIONS_DIR = Path(__file__).resolve().parent / "sessions"
 SOUL_PATH = Path(__file__).resolve().parent / "SOUL.md"
 AGENT_NAME = "Pikachu"  # override with --name
 
+# Request limits (defends against cost/DoS abuse)
+MAX_BODY_BYTES = 256 * 1024   # reject request bodies larger than this
+MAX_MSG_CHARS = 4000          # truncate any single visitor message
+
 # Rate limiting: 20 requests per 60s per IP
 RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_MAX = 20
@@ -46,17 +51,12 @@ SYSTEM_PROMPT = ""
 
 # ── API Key ────────────────────────────────────────────────────
 def load_api_key():
-    """Read FRONTDESK_API_KEY from environment or ~/.frontdesk/.env"""
-    env_paths = [
-        Path.home() / ".frontdesk" / ".env",
-        Path.home() / ".hermes" / ".env",
-    ]
-    for p in env_paths:
-        if p.exists():
-            for line in p.read_text().splitlines():
-                if line.startswith("FRONTDESK_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-                if line.startswith("DEEPSEEK_API_KEY="):
+    """Read the API key from ~/.frontdesk/.env or the environment."""
+    env_path = Path.home() / ".frontdesk" / ".env"
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            for prefix in ("FRONTDESK_API_KEY=", "DEEPSEEK_API_KEY="):
+                if line.startswith(prefix):
                     return line.split("=", 1)[1].strip().strip('"').strip("'")
     return os.environ.get("FRONTDESK_API_KEY", "")
 
@@ -85,14 +85,50 @@ def check_rate_limit(client_ip):
             del _rate_limit_store[ip]
     return False
 
+# ── Message Sanitizing ─────────────────────────────────────────
+def sanitize_messages(raw):
+    """Trust nothing from the client.
+
+    The browser sends the whole conversation back each turn, so a visitor
+    could otherwise inject their own 'system' messages or fake assistant
+    turns to bypass the SOUL.md screening rules. We keep only user/assistant
+    turns with string content, and cap each message's length.
+    """
+    if not isinstance(raw, list):
+        return []
+    clean = []
+    for m in raw:
+        if not isinstance(m, dict):
+            continue
+        role = m.get("role")
+        content = m.get("content")
+        if role not in ("user", "assistant") or not isinstance(content, str):
+            continue
+        clean.append({"role": role, "content": content[:MAX_MSG_CHARS]})
+    return clean
+
+
 # ── Session Saving ─────────────────────────────────────────────
+# session_id ends up in a filename, so a visitor must never be able to smuggle
+# path separators or "../" into it. Only allow the shape we generate ourselves.
+_SESSION_ID_RE = re.compile(r"\A[A-Za-z0-9_-]{1,64}\Z")
+
+def make_session_id():
+    return f"{time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+
+def safe_session_id(raw):
+    """Return a filesystem-safe session id, replacing anything untrusted."""
+    if isinstance(raw, str) and _SESSION_ID_RE.match(raw):
+        return raw
+    return make_session_id()
+
 def save_session(msgs, user_count, session_id=None):
     """Save full conversation to sessions/{session_id}.json"""
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-    if session_id:
-        path = SESSIONS_DIR / f"{session_id}.json"
-    else:
-        path = SESSIONS_DIR / f"{time.strftime('%Y-%m-%d_%H%M%S')}.json"
+    # session_id is already validated by safe_session_id() before reaching here,
+    # but re-validate so this stays safe if called from elsewhere.
+    session_id = safe_session_id(session_id)
+    path = SESSIONS_DIR / f"{session_id}.json"
 
     first_user = next(
         (m["content"][:80] for m in msgs if m.get("role") == "user"), "unknown"
@@ -106,6 +142,10 @@ def save_session(msgs, user_count, session_id=None):
         ],
     }
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2))
+    try:
+        os.chmod(path, 0o600)  # transcripts may hold personal info — owner-only
+    except OSError:
+        pass
     print(f"  Session saved: {path.name}", flush=True)
 
 
@@ -116,9 +156,11 @@ CLOSING_PROMPT = (
     "Keep it short. Do not invite further replies."
 )
 
+# Kept deliberately conservative: phrases that almost only appear in a genuine
+# sign-off. Vague ones like "have a good" / "wish you" were removed because they
+# also show up mid-conversation and closed sessions prematurely.
 CLOSURE_PHRASES = [
-    "best of luck", "take care", "goodbye", "good bye", "all the best",
-    "have a great", "have a good", "have a lovely", "wish you",
+    "best of luck", "goodbye", "good bye", "all the best",
     "feel free to come back", "talk soon", "speak soon",
     "not the right time", "come back when you're ready",
 ]
@@ -290,24 +332,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        # Rate limit
-        client_ip = self.client_address[0]
+        # Rate limit. Behind cloudflared every request arrives from
+        # 127.0.0.1, so the real visitor IP must come from the proxy header.
+        client_ip = self.get_client_ip()
         if check_rate_limit(client_ip):
             self.send_json(429, {"error": "Too many requests. Please wait.", "closed": False})
             return
 
-        length = int(self.headers.get("Content-Length", 0))
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            self.send_json(400, {"error": "Invalid request", "closed": False})
+            return
+        if length > MAX_BODY_BYTES:
+            self.send_json(413, {"error": "Message too large", "closed": False})
+            return
+
         body = self.rfile.read(length)
         try:
             data = json.loads(body)
-            msgs = data.get("messages", [])
         except json.JSONDecodeError:
             self.send_json(400, {"error": "Invalid JSON", "closed": False})
             return
 
-        web_sid = data.get("session_id", "")
-        if not web_sid:
-            web_sid = f"{time.strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+        msgs = sanitize_messages(data.get("messages", []))
+
+        # Never trust the client's session_id verbatim — it becomes a filename.
+        web_sid = safe_session_id(data.get("session_id"))
 
         user_count = sum(1 for m in msgs if m.get("role") == "user")
         full_msgs = [{"role": "system", "content": SYSTEM_PROMPT}] + msgs[-20:]
@@ -351,6 +402,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         if user_count >= 2 and reply:
             save_session(msgs + [{"role": "assistant", "content": reply}], user_count, web_sid)
+
+    def get_client_ip(self):
+        """Real visitor IP. Trust Cloudflare's header when present (we sit
+        behind cloudflared); otherwise fall back to the socket address.
+        Only trust these headers if you actually run behind that proxy."""
+        cf = self.headers.get("CF-Connecting-IP")
+        if cf:
+            return cf.strip()
+        xff = self.headers.get("X-Forwarded-For")
+        if xff:
+            return xff.split(",")[0].strip()
+        return self.client_address[0]
 
     def send_json(self, status, data):
         self.send_response(status)
@@ -396,7 +459,12 @@ def main():
     print(f"Sessions → {SESSIONS_DIR}")
     print()
 
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    # Threaded: one slow 30s DeepSeek call must not block other visitors.
+    class Server(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+    with Server(("", PORT), Handler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

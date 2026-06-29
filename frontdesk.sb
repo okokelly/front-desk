@@ -1,11 +1,14 @@
 ;; macOS sandbox profile for front desk
 ;; Usage: sandbox-exec -f frontdesk.sb /usr/bin/python3 frontdesk.py --port 8765
 ;;
-;; This sandbox restricts the front-desk process to ONLY:
+;; This profile provides FILESYSTEM isolation only. With (allow default) below,
+;; everything is permitted EXCEPT what we explicitly deny — namely the home
+;; directory, re-allowing only:
 ;;   - The frontdesk directory (reading code + prompt, writing sessions)
 ;;   - The .env file (reading API key)
-;;   - Outbound HTTPS to api.deepseek.com
-;; Everything else in the home directory is denied.
+;;
+;; It does NOT restrict network: the process can still reach any host, not just
+;; api.deepseek.com. macOS sandbox can't filter outbound traffic by domain.
 ;;
 ;; Replace the paths below with your actual installation paths.
 
