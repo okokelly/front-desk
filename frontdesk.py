@@ -181,83 +181,85 @@ BLANK_HTML = r"""<!DOCTYPE html>
 <body>This page intentionally left blank.<a href="/front-desk">Visit front desk →</a></body>
 </html>"""
 
-def build_html(name):
-    return f"""<!DOCTYPE html>
+# ── Chat page ──────────────────────────────────────────────────
+# Plain HTML / CSS / JS, kept out of Python's way. build_html() drops the
+# agent's name into the {{NAME}} placeholders at request time.
+CHAT_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{name}</title>
+<title>{{NAME}}</title>
 <style>
-  :root {{ --bg: #f5f3f0; --card: #fff; --text: #1a1a1a; --muted: #999; --accent: #2d2d2d; --bubble-me: #e8e6e3; --bubble-them: #fff; --border: #e0ddd8; --danger: #c44; }}
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }}
-  .app {{ width: 100%; max-width: 540px; display: flex; flex-direction: column; min-height: 90vh; }}
-  header {{ text-align: center; padding: 32px 0 12px; }}
-  header h1 {{ font-size: 1.6rem; font-weight: 500; letter-spacing: 0.06em; }}
-  header p {{ color: var(--muted); font-size: 0.82rem; margin-top: 4px; }}
-  .chat {{ flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 12px 0; }}
-  .msg {{ max-width: 88%; padding: 10px 14px; border-radius: 14px; font-size: 0.88rem; line-height: 1.55; word-break: break-word; }}
-  .msg.user {{ align-self: flex-end; background: var(--bubble-me); border-bottom-right-radius: 6px; }}
-  .msg.bot {{ align-self: flex-start; background: var(--bubble-them); border: 1px solid var(--border); border-bottom-left-radius: 6px; }}
-  .msg.closed {{ align-self: center; color: var(--muted); font-size: 0.78rem; padding: 8px 0; font-style: italic; }}
-  .msg.error {{ align-self: center; background: #fff0f0; border: 1px solid #fcc; color: var(--danger); font-size: 0.8rem; max-width: 95%; }}
-  .input-area {{ display: flex; gap: 8px; padding: 12px 0 20px; border-top: 1px solid var(--border); margin-top: auto; }}
-  .input-area input {{ flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 20px; font-size: 0.88rem; background: #fff; }}
-  .input-area input:disabled {{ opacity: 0.4; }}
-  .input-area button {{ background: var(--accent); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }}
-  .input-area button:disabled {{ opacity: 0.3; cursor: not-allowed; }}
-  .typing {{ color: var(--muted); font-size: 0.8rem; padding: 4px 14px; align-self: flex-start; font-style: italic; display: none; }}
-  footer {{ text-align: center; padding: 4px 0 12px; font-size: 0.7rem; color: var(--muted); }}
+  :root { --bg: #f5f3f0; --card: #fff; --text: #1a1a1a; --muted: #999; --accent: #2d2d2d; --bubble-me: #e8e6e3; --bubble-them: #fff; --border: #e0ddd8; --danger: #c44; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+  .app { width: 100%; max-width: 540px; display: flex; flex-direction: column; min-height: 90vh; }
+  header { text-align: center; padding: 32px 0 12px; }
+  header h1 { font-size: 1.6rem; font-weight: 500; letter-spacing: 0.06em; }
+  header p { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
+  .chat { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 12px 0; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 14px; font-size: 0.88rem; line-height: 1.55; word-break: break-word; }
+  .msg.user { align-self: flex-end; background: var(--bubble-me); border-bottom-right-radius: 6px; }
+  .msg.bot { align-self: flex-start; background: var(--bubble-them); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+  .msg.closed { align-self: center; color: var(--muted); font-size: 0.78rem; padding: 8px 0; font-style: italic; }
+  .msg.error { align-self: center; background: #fff0f0; border: 1px solid #fcc; color: var(--danger); font-size: 0.8rem; max-width: 95%; }
+  .input-area { display: flex; gap: 8px; padding: 12px 0 20px; border-top: 1px solid var(--border); margin-top: auto; }
+  .input-area input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 20px; font-size: 0.88rem; background: #fff; }
+  .input-area input:disabled { opacity: 0.4; }
+  .input-area button { background: var(--accent); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .input-area button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .typing { color: var(--muted); font-size: 0.8rem; padding: 4px 14px; align-self: flex-start; font-style: italic; display: none; }
+  footer { text-align: center; padding: 4px 0 12px; font-size: 0.7rem; color: var(--muted); }
 </style>
 </head>
 <body>
 <div class="app">
-  <header><h1>{name}</h1><p>Front desk</p></header>
+  <header><h1>{{NAME}}</h1><p>Front desk</p></header>
   <div class="chat" id="chat"></div>
-  <div class="typing" id="typing">{name} is thinking…</div>
+  <div class="typing" id="typing">{{NAME}} is thinking…</div>
   <div class="input-area" id="input-area">
     <input type="text" id="input" placeholder="Introduce yourself…" onkeydown="if(event.key==='Enter')send()" autofocus>
     <button id="sendBtn" onclick="send()">→</button>
   </div>
-  <footer>You're talking to {name}, an AI assistant. They'll figure out how best to help.</footer>
+  <footer>You're talking to {{NAME}}, an AI assistant. They'll figure out how best to help.</footer>
 </div>
 <script>
 const $chat = document.getElementById('chat');
 const $input = document.getElementById('input');
 const $sendBtn = document.getElementById('sendBtn');
 const $typing = document.getElementById('typing');
-let messages = [{{role:'system',content:''}}];
+let messages = [{role:'system',content:''}];
 let waiting = false;
 let closed = false;
 let sessionId = null;
 
-function addMsg(text, role) {{
+function addMsg(text, role) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   div.innerHTML = renderMD(text);
   $chat.appendChild(div);
   $chat.scrollTop = $chat.scrollHeight;
-}}
+}
 
-function renderMD(text) {{
+function renderMD(text) {
   let html = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
-    .replace(/\\*(.+?)\\*/g, '<em>$1</em>')
-    .replace(/\\n\\n/g, '<br><br>')
-    .replace(/\\n/g, '<br>');
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
   return html;
-}}
+}
 
-function closeChat() {{
+function closeChat() {
   closed = true;
   document.getElementById('input-area').style.display = 'none';
   document.querySelector('footer').textContent = 'Conversation ended.';
   addMsg('— end of conversation —', 'closed');
-}}
+}
 
-async function send() {{
+async function send() {
   const text = $input.value.trim();
   if (!text || waiting || closed) return;
   $input.value = '';
@@ -265,43 +267,48 @@ async function send() {{
   $input.disabled = true;
   $sendBtn.disabled = true;
   addMsg(text, 'user');
-  messages.push({{role:'user',content:text}});
+  messages.push({role:'user',content:text});
   $typing.style.display = 'block';
   $chat.scrollTop = $chat.scrollHeight;
 
-  try {{
-    const resp = await fetch('/api/chat', {{
+  try {
+    const resp = await fetch('/api/chat', {
       method: 'POST',
-      headers: {{'Content-Type':'application/json'}},
-      body: JSON.stringify({{messages, session_id: sessionId}})
-    }});
-    if (!resp.ok) {{
-      const err = await resp.json().catch(()=>({{}}));
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({messages, session_id: sessionId})
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}));
       throw new Error(err.error || 'Something went wrong');
-    }}
+    }
     const data = await resp.json();
     sessionId = data.session_id;
-    messages.push({{role:'assistant',content:data.reply}});
+    messages.push({role:'assistant',content:data.reply});
     addMsg(data.reply, 'bot');
     if (data.closed) closeChat();
-  }} catch(e) {{
+  } catch(e) {
     addMsg('Sorry, something went wrong. Try again in a moment.', 'error');
-  }} finally {{
+  } finally {
     $typing.style.display = 'none';
-    if (!closed) {{
+    if (!closed) {
       waiting = false;
       $input.disabled = false;
       $sendBtn.disabled = false;
-    }}
+    }
     $input.focus();
     $chat.scrollTop = $chat.scrollHeight;
-  }}
-}}
+  }
+}
 
-addMsg("Hi! I'm {name}. Who are you, and what brings you here?", 'bot');
+addMsg("Hi! I'm {{NAME}}. Who are you, and what brings you here?", 'bot');
 </script>
 </body>
 </html>"""
+
+def build_html(name):
+    """Render the chat page with the agent's name filled in."""
+    return CHAT_HTML.replace("{{NAME}}", name)
+
 
 # ── Server ─────────────────────────────────────────────────────
 class Handler(http.server.BaseHTTPRequestHandler):
