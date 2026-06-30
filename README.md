@@ -10,6 +10,8 @@ conversations are worth your time.
 
 One Python file. No dependencies. You write the rules; it sets the tone.
 
+demo: www.kellyjia.com/front-desk
+
 ```
 Visitor → yoursite.com/front-desk → Pikachu → you (for the conversations that matter)
 ```
